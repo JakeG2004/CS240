@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "signal.h": "c",
+        "semaphore.h": "c",
+        "unistd.h": "c",
+        "wait.h": "c"
+    }
+}
