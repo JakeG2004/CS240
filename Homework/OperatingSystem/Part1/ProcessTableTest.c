@@ -11,20 +11,20 @@ int main()
     srand(time(NULL));
 
     //create process table
-    NodePtr processTable = NULL;
+    PTNodePtr processTable = NULL;
 
     //insert 10 nodes
     for(int i = 0; i < 10; i++)
     {
-        NodePtr newNode = CreateNode(CreateRandomProcess(i));
-        InsertNode(&processTable, newNode);
+        PTNodePtr newNode = CreatePTNode(CreateRandomProcess(i));
+        InsertPTNode(&processTable, newNode);
     }
 
     //insert 5 more
     for(int i = 0; i < 5; i++)
     {
-        NodePtr newNode = CreateNode(CreateRandomProcess(i));
-        InsertNode(&processTable, newNode);
+        PTNodePtr newNode = CreatePTNode(CreateRandomProcess(i));
+        InsertPTNode(&processTable, newNode);
     }
 
     //print values

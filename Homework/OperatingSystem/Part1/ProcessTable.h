@@ -13,20 +13,20 @@ Strange amalgamation of a hash map and dynamic array
 #define PROCESS_TABLE_H
 
 //node for making a 2d linked list
-struct node
+struct PTNode
 {
     PCB PCB;
-    struct node* nextBucket;
-    struct node* nextItem;
+    struct PTNode* nextBucket;
+    struct PTNode* nextItem;
 };
 
-typedef struct node node;
-typedef struct node* NodePtr;
+typedef struct PTNode PTNode;
+typedef struct PTNode* PTNodePtr;
 
-NodePtr CreateNode(PCB PCB)
+PTNodePtr CreatePTNode(PCB PCB)
 {
     //create new node
-    NodePtr newNode = (NodePtr)(malloc(sizeof(node)));
+    PTNodePtr newNode = (PTNodePtr)(malloc(sizeof(PTNode)));
 
     //check for error
     if(newNode == NULL)
@@ -44,7 +44,7 @@ NodePtr CreateNode(PCB PCB)
 }
 
 //create a 2d linked list, with "buckets" representing arrivaltimes. Processes are inserted into the table based on their arrival time
-void InsertNode(NodePtr* head, NodePtr newNode)
+void InsertPTNode(PTNodePtr* head, PTNodePtr newNode)
 {
     //handle empty list
     if(*head == NULL)
@@ -54,7 +54,7 @@ void InsertNode(NodePtr* head, NodePtr newNode)
     }
 
     //check buckets for the process arrival time
-    NodePtr p = *head;
+    PTNodePtr p = *head;
     while(p -> nextBucket != NULL && p -> PCB.arrivalTime != newNode -> PCB.arrivalTime) //exit conditions are p -> next = NULL or p -> arrivalTime = newNode -> arrivaltimed
     {
         p = p -> nextBucket;
@@ -84,7 +84,7 @@ void InsertNode(NodePtr* head, NodePtr newNode)
 }
 
 //returns process with arrival time -1 if failed
-PCB FetchProcessWithArrivalTime(NodePtr* head, int arrivalTime)
+PCB FetchProcessWithArrivalTime(PTNodePtr* head, int arrivalTime)
 {
     PCB retVal = CreatePCB("", -1, 0, 0);
 
@@ -96,8 +96,8 @@ PCB FetchProcessWithArrivalTime(NodePtr* head, int arrivalTime)
     }
 
     //traverse buckets to find arrival time
-    NodePtr prevNode = NULL;
-    NodePtr curNode = *head;
+    PTNodePtr prevNode = NULL;
+    PTNodePtr curNode = *head;
 
     //navigate through buckets until either at end of list or arrivalTime bucket found
     while(curNode != NULL && curNode -> PCB.arrivalTime != arrivalTime)
@@ -167,7 +167,7 @@ PCB FetchProcessWithArrivalTime(NodePtr* head, int arrivalTime)
     }
 }
 
-void PrintContentsOfBucketWithArrivalTime(NodePtr head, int arrivalTime)
+void PrintContentsOfBucketWithArrivalTime(PTNodePtr head, int arrivalTime)
 {
     //handle empty list
     if(head == NULL)
@@ -177,7 +177,7 @@ void PrintContentsOfBucketWithArrivalTime(NodePtr head, int arrivalTime)
     }
 
     //traverse buckets to find arrival time
-    NodePtr p = head;
+    PTNodePtr p = head;
 
     //navigate through the buckets
     while(p != NULL && p -> PCB.arrivalTime != arrivalTime)
@@ -206,11 +206,11 @@ void PrintContentsOfBucketWithArrivalTime(NodePtr head, int arrivalTime)
     return;
 }
 
-void PrintBuckets(NodePtr head)
+void PrintBuckets(PTNodePtr head)
 {
     printf("BUCKETS:\n");
 
-    NodePtr p = head;
+    PTNodePtr p = head;
 
     while(p != NULL)
     {
@@ -219,7 +219,7 @@ void PrintBuckets(NodePtr head)
     }
 }
 
-void FreeTable(NodePtr* head)
+void FreeTable(PTNodePtr* head)
 {
     if(*head == NULL)
     {
