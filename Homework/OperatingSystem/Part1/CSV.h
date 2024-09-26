@@ -19,13 +19,14 @@ FILE* OpenCSV(char* filename)
     return file;
 }
 
-char* ReadLine(FILE* file)
+int ReadLine(FILE* file, char** line)
 {
     int bufferSize = 1024;
 
     if(!file)
     {
-        return NULL;
+        *line = NULL;
+        return 0;
     }
 
     char* buffer = (char*)malloc(sizeof(char) * bufferSize);
@@ -41,7 +42,8 @@ char* ReadLine(FILE* file)
             buffer[len - 1] = '\0';
         }
 
-        return buffer;
+        *line = buffer;
+        return 1;
     }
 }
 

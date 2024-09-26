@@ -91,7 +91,7 @@ PCB FetchProcessWithArrivalTime(PTNodePtr* head, int arrivalTime)
     //handle empty list
     if(*head == NULL)
     {
-        printf("Trying to fetch from empty table...\n");
+        //printf("Trying to fetch from empty table...\n");
         return retVal;
     }
 
@@ -109,7 +109,7 @@ PCB FetchProcessWithArrivalTime(PTNodePtr* head, int arrivalTime)
     //bucket not found
     if(curNode == NULL)
     {
-        printf("Unable to find process bucket with arrival time %i\n", arrivalTime);
+        //printf("Unable to find process bucket with arrival time %i\n", arrivalTime);
         return retVal;
     }
 
@@ -188,7 +188,7 @@ void PrintContentsOfBucketWithArrivalTime(PTNodePtr head, int arrivalTime)
     //bucket not found
     if(p == NULL)
     {
-        printf("Unable to find process bucket with arrival time %i\n", arrivalTime);
+        //printf("Unable to find process bucket with arrival time %i\n", arrivalTime);
         return;
     }
 
