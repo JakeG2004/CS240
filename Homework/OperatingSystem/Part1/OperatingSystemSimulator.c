@@ -13,7 +13,7 @@ void GetProcessesAtArrivalTime(PTNodePtr* processTable, QNodePtr* processQueue, 
 
 int main()
 {
-    int TICK_MAX = 10;
+    int TICK_MAX = 1000;
 
     PTNodePtr processTable = NULL;
     QNodePtr QHead = NULL;
