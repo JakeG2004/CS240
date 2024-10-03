@@ -8,7 +8,7 @@
 #include "ProcessTable.h"
 
 void InsertProcessesFromCSVIntoTable(char* filePath, PTNodePtr* head);
-PCB SimulateProcessCycle(PTNodePtr* processTable, QNodePtr* processQueue, int);
+PCB SimulateProcessCycle(PTNodePtr* processTable, QNodePtr* processQueue, QNodePtr* terminatedQueue, int TICK_MAX);
 void GetProcessesAtArrivalTime(PTNodePtr* processTable, QNodePtr* processQueue, int arrivalTime);
 
 int main()
@@ -16,22 +16,33 @@ int main()
     int TICK_MAX = 1000;
 
     PTNodePtr processTable = NULL;
-    QNodePtr QHead = NULL;
+    QNodePtr readyQueue = NULL;
+    QNodePtr terminatedQueue = NULL;
+
     InsertProcessesFromCSVIntoTable("TestData.csv", &processTable);
 
-    PCB currentProcess = SimulateProcessCycle(&processTable, &QHead, TICK_MAX);
+    PCB currentProcess = SimulateProcessCycle(&processTable, &readyQueue, &terminatedQueue, TICK_MAX);
 
     printf("\nAT TICK %i\nCURRENT PROCESS:\n", TICK_MAX);
-    PrintPCB(currentProcess);
+    if(currentProcess.totalCPUTimeNeeded == 0)
+    {
+        printf("No remaining processes.\n");
+    }
 
-    printf("\nREMAINING PROCESSES:\n");
-    PrintQueue(QHead);
+    else
+    {
+        PrintPCB(currentProcess);
+    }
 
-    FreeQueue(&QHead);
+    printf("\nNUMBER OF REMAINING PROCESSES: %i\n", SizeOfQueue(readyQueue));
+    printf("\nNUMBER OF COMPLETED PROCESSES: %i\n", SizeOfQueue(terminatedQueue));
+
+    FreeQueue(&readyQueue);
+    FreeQueue(&terminatedQueue);
     FreeTable(&processTable);
 }
 
-PCB SimulateProcessCycle(PTNodePtr* processTable, QNodePtr* processQueue, int TICK_MAX)
+PCB SimulateProcessCycle(PTNodePtr* processTable, QNodePtr* processQueue, QNodePtr* terminatedQueue, int TICK_MAX)
 {
     PCB currentProcess;
     int hasProcess = 0;
@@ -57,6 +68,7 @@ PCB SimulateProcessCycle(PTNodePtr* processTable, QNodePtr* processQueue, int TI
         if(!hasProcess)
         {
             currentProcess = Dequeue(processQueue);
+            currentProcess.state = RUNNING;
             hasProcess = 1;
             startTime = tick;
         }
@@ -82,11 +94,13 @@ PCB SimulateProcessCycle(PTNodePtr* processTable, QNodePtr* processQueue, int TI
         //clear process flag
         hasProcess = 0;
         currentProcess.state = TERMINATED;
+        Enqueue(terminatedQueue, currentProcess);
 
         //switch process if queue not empty to avoid switching time bug
         if(SizeOfQueue(*processQueue) != 0)
         {
             currentProcess = Dequeue(processQueue);
+            currentProcess.state = RUNNING;
             hasProcess = 1;
             startTime = tick;
 
@@ -133,6 +147,7 @@ void InsertProcessesFromCSVIntoTable(char* filePath, PTNodePtr* head)
         InsertPTNode(head, newPTNode);
 
         free(line);
+        free(processName);
 
         //increment the PID
         PID++;
