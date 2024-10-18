@@ -18,6 +18,7 @@ void GetProcessesAtArrivalTime(int arrivalTime);
 void PromoteAndDemoteProcess(PCB* currentProcess);
 void ReEnqueueProcess(PCB currentProcess, int* hasProcess);
 void HandleProcessCompletion(PCB* currentProcess);
+void AgeProcesses(PCB* currentProcess);
 
 int ChooseCurrentProcess(PCB* currentProcess);
 
@@ -45,6 +46,7 @@ int main()
 
     PCB currentProcess = SimulateProcessCycle();
 
+    //print useful info
     printf("\nAT TICK %i\nCURRENT PROCESS:\n", TICK_MAX);
     if(currentProcess.totalCPUTimeNeeded < 1)
     {
@@ -62,15 +64,19 @@ int main()
     printf("\nNUMBER OF COMPLETED PROCESSES: %i\n", SizeOfQueue(terminatedQueue));
 
 
-    //free memory
+    //free priority queues
     FreeQueue(&p0Queue);
     FreeQueue(&p1Queue);
     FreeQueue(&p2Queue);
 
+    //free terminated queue
     FreeQueue(&terminatedQueue);
+
+    //free process table
     FreeTable(&processTable);
 }
 
+//emulate the processing cycle of the operating system, will end when TICK_MAX reached
 PCB SimulateProcessCycle()
 {
     PCB currentProcess;
@@ -79,7 +85,12 @@ PCB SimulateProcessCycle()
 
     for(int tick = 0; tick < TICK_MAX; tick++)
     {
-        printf("TICK: %i\n", tick);
+        //age processes to top every S ticks
+        if(tick % (QUANTUM * 100) == 0)
+        {
+            AgeProcesses(&currentProcess);
+        }
+
         //end if TICK_MAX reached
         if(tick == TICK_MAX)
         {
@@ -95,7 +106,6 @@ PCB SimulateProcessCycle()
             //if there is no current process, loop
             if(ChooseCurrentProcess(&currentProcess) == 0)
             {
-                //PrintPCB(currentProcess);
                 continue;
             }
 
@@ -103,20 +113,32 @@ PCB SimulateProcessCycle()
             {
                 hasProcess = 1;
                 currentProcess.state = RUNNING;
-                currentProcess.timeUsage = rand() % QUANTUM;
+                currentProcess.timeUsage = (rand() % QUANTUM) + 1;
             }
         }
 
         //run process time slice
-        for(int j = 0; j < QUANTUM && j < currentProcess.timeUsage; j++)
+        for(int j = 0; j < QUANTUM; j++)
         {
             //add to tick
             tick++;
+
+            //age processes to top every S ticks
+            if(tick % (QUANTUM * 100) == 0)
+            {
+                AgeProcesses(&currentProcess);
+            }
 
             //end if TICK_MAX reached
             if(tick == TICK_MAX)
             {
                 return currentProcess;
+            }
+
+            //if process cant utilize the rest of the quantum, break
+            if(j >= currentProcess.timeUsage)
+            {
+                break;
             }
 
             //add processes to queue
@@ -131,15 +153,22 @@ PCB SimulateProcessCycle()
             }
         }
 
+        //handle process completion if process complete
+        if(currentProcess.currentCPUTimeUsed == currentProcess.totalCPUTimeNeeded)
+        {
+            printf("%s completed at tick %i, ended with priority %i, and arrived at time %i\n", currentProcess.processName, tick, currentProcess.priority, currentProcess.arrivalTime);
+            HandleProcessCompletion(&currentProcess);
+        }
+
+        //handle re-enqueuing
         PromoteAndDemoteProcess(&currentProcess);
         ReEnqueueProcess(currentProcess, &hasProcess);
-
-        HandleProcessCompletion(&currentProcess);
     }
 
     return currentProcess;
 }
 
+//handle taking data from CSV file and inserting it into the process table
 void InsertProcessesFromCSVIntoTable(char* filePath, PTNodePtr* head)
 {
     printf("Inserting processes to table\n");
@@ -151,16 +180,20 @@ void InsertProcessesFromCSVIntoTable(char* filePath, PTNodePtr* head)
     //while there are lines to be read
     while(ReadLine(processFile, &line))
     {
+        printf("%s\n", line);
         printf("Reading line %i\n", PID);
+
         //get data fields from the line
         char* processName = GetField(line, 0);
         int arrivalTime = atoi(GetField(line, 1));
+        printf("1\n");
         int totalCPUTimeNeeded = atoi(GetField(line, 2));
         int processPriority = atoi(GetField(line, 3));
 
         //create a PCB
         PCB newPCB = CreatePCB(processName, arrivalTime, totalCPUTimeNeeded, PID, processPriority);
 
+        //create and insert new node
         PTNodePtr newPTNode = CreatePTNode(newPCB);
         InsertPTNode(head, newPTNode);
 
@@ -175,6 +208,7 @@ void InsertProcessesFromCSVIntoTable(char* filePath, PTNodePtr* head)
     printf("Done!\n");
 }
 
+//fetches all processes with arrival time n from the process table, and queue them accordingly
 void GetProcessesAtArrivalTime(int arrivalTime)
 {
     PCB newPCB;
@@ -204,6 +238,7 @@ void GetProcessesAtArrivalTime(int arrivalTime)
     }
 }
 
+//promote and demote processes according to promotion and demotion rules
 void PromoteAndDemoteProcess(PCB* currentProcess)
 {
     //promote if great time usage
@@ -227,6 +262,7 @@ void PromoteAndDemoteProcess(PCB* currentProcess)
     }
 }
 
+//handle re-enqueing of process after it uses its quantum
 void ReEnqueueProcess(PCB currentProcess, int* hasProcess)
 {
     //re-enqueue if process not complete
@@ -235,6 +271,7 @@ void ReEnqueueProcess(PCB currentProcess, int* hasProcess)
         *hasProcess = 0;
         currentProcess.state = READY;
         currentProcess.timeUsage = rand() % QUANTUM;
+        //currentProcess.timeUsage = QUANTUM;
 
         switch(currentProcess.priority)
         {
@@ -251,6 +288,7 @@ void ReEnqueueProcess(PCB currentProcess, int* hasProcess)
     }
 }
 
+//mark process as complete and select a new process
 void HandleProcessCompletion(PCB* currentProcess)
 {
     //negative arrival time denotes no current process
@@ -263,6 +301,24 @@ void HandleProcessCompletion(PCB* currentProcess)
         //set new time usage
         (*currentProcess).timeUsage = rand() % QUANTUM;
     } 
+}
+
+//move all processes to top queue to prevent starvation
+void AgeProcesses(PCB* currentProcess)
+{
+    (*currentProcess).priority = 0;
+
+    //move from p1queue into p0queue
+    while(SizeOfQueue(p1Queue) != 0)
+    {
+        Enqueue(&p0Queue, Dequeue(&p1Queue));
+    }
+
+    //move from p2queue into p0 queue
+    while(SizeOfQueue(p2Queue) != 0)
+    {
+        Enqueue(&p0Queue, Dequeue(&p2Queue));
+    }
 }
 
 //will return 0 if couldnt find a process, 1 otherwise

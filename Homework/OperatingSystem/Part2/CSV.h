@@ -21,64 +21,59 @@ FILE* OpenCSV(char* filename)
 
 int ReadLine(FILE* file, char** line)
 {
-    int bufferSize = 1024;
+    int bufferLen = 1024;
 
-    if(!file)
+    //handle file not open
+    if(file == NULL)
     {
+        printf("Failed to open file\n");
         *line = NULL;
         return 0;
     }
 
-    char* buffer = (char*)malloc(sizeof(char) * bufferSize);
+    char* buffer = (char*)malloc(sizeof(char) * 1024);
 
-    //read line
-    if(fgets(buffer, bufferSize, file) != NULL)
+    if(fgets(buffer, bufferLen, file)) 
     {
-        int len = strlen(buffer);
-
-        //replace newline with null terminator
-        if(len > 0 && buffer[len - 1] == '\n')
-        {
-            buffer[len - 1] = '\0';
-        }
-
-        *line = buffer;
+        buffer[bufferLen - 1] = '\0';
+        line = &buffer;
         return 1;
     }
+
+    return 0;
 }
 
 char* GetField(char* line, int fieldIndex) 
 {
-    //duplicate the line string
+    //duplicate line because strtok modifies in place
     char* tmp = strdup(line);
 
-    char* token;
-    int currentField = 0;
+    //get first token
+    char* token = strtok(tmp, ",");
     
-    //grab first token
-    token = strtok(tmp, ",");
-
-    //while token is valid
-    while (token != NULL) 
+    //get following tokens
+    for(int i = 0; token != NULL; i++)
     {
-        if (currentField == fieldIndex) {
-            //keep the token
-            char* result = strdup(token);
-            
-            //free and return the result
+        if(i == fieldIndex)
+        {
+            //free memory and return
             free(tmp);
-            return result;
+            free(token);
+            return token;
         }
 
-        //increment and grab next token
+        //get next token
         token = strtok(NULL, ",");
-        currentField++;
     }
-    
-    //free and return
+
+    //free memory
     free(tmp);
+    free(token);
+    
+    //return NULL if error encountered
     return NULL;
 }
+
 
 void CloseCSV(FILE* file)
 {
