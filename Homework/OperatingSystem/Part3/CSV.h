@@ -71,24 +71,21 @@ char* GetField(char* line, int fieldIndex)
     {
         if (i == fieldIndex) 
         {
-            // Allocate memory for the result and copy the token
-            char* result = strdup(token);
             free(tmp); // Free the duplicated line
-            return result; // Return the copied field
+
+            return token; // Return the copied field
         }
 
         // Get the next token
         token = strtok(NULL, ",");
     }
 
-    // Free memory
+    // Free memory if fieldIndex is out of bounds
     free(tmp);
     
     // Return NULL if fieldIndex is out of bounds
     return NULL;
 }
-
-
 
 void CloseCSV(FILE* file)
 {

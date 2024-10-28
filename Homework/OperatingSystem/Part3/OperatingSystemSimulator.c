@@ -193,8 +193,6 @@ void InsertProcessesFromCSVIntoTable(char* filePath, PTNodePtr* head)
     //while there are lines to be read
     while(ReadLine(processFile, &line))
     {
-        //printf("%s\n", line);
-        //printf("Reading line %i\n", PID);
 
         //get data fields from the line
         char* processName = GetField(line, 0);
