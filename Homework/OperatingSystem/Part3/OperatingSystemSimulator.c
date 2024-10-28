@@ -27,6 +27,9 @@ int ClaimResource(PCB* process, RCB* resource);
 int ChooseCurrentProcess(PCB* currentProcess);
 void GetRandomTimeUsage(PCB* process);
 
+int GetResourceIfAvailable(PCB* currentProcess, int* timeUsed);
+void HandleProcessWithResource(PCB* currentProcess);
+
 
 //=============GLOBAL VARIABLES=============
 int TICK_MAX = 1000000;
@@ -72,6 +75,14 @@ int main()
     printf("\nNUMBER OF PROCESSES IN P2 QUEUE: %i", SizeOfQueue(p2Queue));
     printf("\nNUMBER OF COMPLETED PROCESSES: %i\n", SizeOfQueue(terminatedQueue));
 
+    // free resource queues
+    for(int i = 0; i < numResources; i++)
+    {
+        printf("\nNUMBER OF PROCESSES IN P%i QUEUE: %i", i, SizeOfQueue(resources[i].PCBQueue));
+    }
+
+    printf("\n");
+
 
     //free priority queues
     FreeQueue(&p0Queue);
@@ -80,6 +91,12 @@ int main()
 
     //free terminated queue
     FreeQueue(&terminatedQueue);
+
+    // free resource queues
+    for(int i = 0; i < numResources; i++)
+    {
+        FreeQueue(&(resources[i].PCBQueue));
+    }
 
     //free process table
     FreeTable(&processTable);
@@ -131,27 +148,30 @@ PCB SimulateProcessCycle()
                 break;
             }
 
+            if(GetResourceIfAvailable(&currentProcess, &timeUsed) == -1)
+            {
+                break;
+            }
+
             // Increment and decrement counters accordingly
             currentProcess.currentCPUTimeUsed++;
 
             tick++;
 
-            if(currentProcess.resource != NULL)
-            {
-                currentProcess.resource -> resourceTimer--;
-            }
+            HandleProcessWithResource(&currentProcess);
 
             // Insert new processes into the table
             GetProcessesAtArrivalTime(tick);
         }
 
+        // process completed
         if(currentProcess.currentCPUTimeUsed >= currentProcess.totalCPUTimeNeeded)
         {
-            printf("%s finished\n", currentProcess.processName);
             HandleProcessCompletion(&currentProcess);
         }
 
-        if(timeUsed < QUANTUM)
+        // process didn't use whole timeslice
+        else if(timeUsed < QUANTUM && timeUsed != -1)
         {
             PromoteAndDemoteProcess(&currentProcess);
             ReEnqueueProcess(currentProcess);
@@ -273,24 +293,14 @@ void ReEnqueueProcess(PCB currentProcess)
         {
             case 0:
                 Enqueue(&p0Queue, currentProcess);
-                printf("Re-enqueued %s to p0\n", currentProcess.processName);
                 break;
             case 1:
                 Enqueue(&p1Queue, currentProcess);
-                printf("Re-enqueued %s to p1\n", currentProcess.processName);
                 break;
             case 2:
                 Enqueue(&p2Queue, currentProcess);
-                printf("Re-enqueued %s to p2\n", currentProcess.processName);
                 break;
         }
-
-        /*PrintQueue(p0Queue);
-        getchar();
-        PrintQueue(p1Queue);
-        getchar();
-        PrintQueue(p2Queue);
-        getchar();*/
     }
 }
 
@@ -382,3 +392,48 @@ void GetRandomTimeUsage(PCB* process)
         process -> timeUsage = rand() % QUANTUM + 1;
 }
 
+// 1 for got resource, -1 for blocked on resource, 0 for not checked
+int GetResourceIfAvailable(PCB* currentProcess, int* timeUsed)
+{
+    // Handle resources
+    if(currentProcess -> desiredResource != -1 && currentProcess -> resource == NULL && currentProcess -> currentCPUTimeUsed == currentProcess -> resourceAcquiredAtTime)
+    {
+        // Attempt to claim a resource, if failure, block and enqueue
+        if(ClaimResource(currentProcess, &(resources[currentProcess -> desiredResource])) == 0)
+        {
+            //printf("Blocking %s on %s\n", currentProcess.processName, resources[currentProcess.desiredResource].resourceName);
+            currentProcess -> state = BLOCKED;
+            Enqueue(&(resources[currentProcess -> desiredResource].PCBQueue), *currentProcess);
+            
+            *timeUsed = -1;
+
+            //break;
+            return -1;
+        }
+
+        return 1;
+
+        //printf("%s has %s\n", currentProcess.processName, currentProcess.resource -> resourceName);
+    }
+
+    return 0;
+}
+
+void HandleProcessWithResource(PCB* currentProcess)
+{
+    if(currentProcess -> resource != NULL)
+    {
+        currentProcess -> resource -> resourceTimer--;
+
+        if(currentProcess -> resource -> resourceTimer == 0)
+        {
+            if(SizeOfQueue(currentProcess -> resource -> PCBQueue) > 0)
+            {
+                PCB freedProcess = Dequeue(&(currentProcess -> resource -> PCBQueue));
+                ReEnqueueProcess(freedProcess);
+            }
+            
+            FreeRCB(currentProcess, currentProcess -> resource);
+        }
+    }
+}
