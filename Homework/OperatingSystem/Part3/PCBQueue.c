@@ -57,7 +57,7 @@ PCB Dequeue(QNodePtr* head)
     p->next = NULL;
     free(p);
 
-    printf("Dequeuing %s\n", retVal.processName);
+    //printf("Dequeuing %s\n", retVal.processName);
 
     return retVal;
 }
