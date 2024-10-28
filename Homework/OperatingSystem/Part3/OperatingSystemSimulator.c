@@ -5,6 +5,7 @@
 
 #include "CSV.h"
 #include "PCB.h"
+#include "RCB.h"
 #include "PCBQueue.h"
 #include "ProcessTable.h"
 
@@ -19,6 +20,9 @@ void PromoteAndDemoteProcess(PCB* currentProcess);
 void ReEnqueueProcess(PCB currentProcess, int* hasProcess);
 void HandleProcessCompletion(PCB* currentProcess);
 void AgeProcesses(PCB* currentProcess);
+
+void InitResources(RCB resources[], int numResources);
+int ClaimResource(PCB* process, RCB* resource);
 
 int ChooseCurrentProcess(PCB* currentProcess);
 
@@ -39,10 +43,14 @@ QNodePtr p2Queue = NULL;
 
 QNodePtr terminatedQueue = NULL;
 
+const int numResources = 3;
+RCB resources[3];
+
 int main()
 {
     srand(time(NULL));
     InsertProcessesFromCSVIntoTable("TestData.csv", &processTable);
+    InitResources(resources, numResources);
 
     PCB currentProcess = SimulateProcessCycle();
 
@@ -82,6 +90,7 @@ PCB SimulateProcessCycle()
     PCB currentProcess;
     int hasProcess = 0;
     int startTime = 0;
+    int needsQing;
 
     for(int tick = 0; tick < TICK_MAX; tick++)
     {
@@ -103,6 +112,7 @@ PCB SimulateProcessCycle()
         //grab current process if it doesn't already have one
         if(!hasProcess)
         {
+            printf("Fetching new process!\n");
             //if there is no current process, loop
             if(ChooseCurrentProcess(&currentProcess) == 0)
             {
@@ -117,11 +127,68 @@ PCB SimulateProcessCycle()
             }
         }
 
+        if(currentProcess.arrivalTime != -1)
+        {
+            printf("%s wants %i at time %i\n", currentProcess.processName, currentProcess.desiredResource, currentProcess.resourceAcquiredAtTime);
+            //printf("%i state: %i\n", currentProcess.desiredResource, resources[currentProcess.desiredResource].state);
+        }
+        getchar();
+        printf("\np0Q: ");
+        PrintQueue(p0Queue);        
+        getchar();
+
+        printf("\np1Q: ");
+        PrintQueue(p1Queue);        
+        getchar();
+
+        printf("\np2Q: ");
+        PrintQueue(p2Queue);        
+        getchar();
+
         //run process time slice
         for(int j = 0; j < QUANTUM; j++)
         {
+            needsQing = 0;
             //add to tick
             tick++;
+
+            // handle resource allocation for processes
+            if(currentProcess.currentCPUTimeUsed == currentProcess.resourceAcquiredAtTime && currentProcess.resource == NULL && currentProcess.desiredResource != -1)
+            {
+                // resource is already allocated
+                if(ClaimResource(&currentProcess, &resources[currentProcess.desiredResource]) == 0)
+                {
+                    // enqueue the process to the resource's queue
+                    printf("%s enqueued to %s\n", currentProcess.processName, resources[currentProcess.desiredResource].resourceName);
+                    currentProcess.state = BLOCKED;
+                    Enqueue(&(resources[currentProcess.desiredResource].PCBQueue), currentProcess);
+                    break;
+                }
+
+                printf("%s has %s\n", currentProcess.processName, currentProcess.resource->resourceName);
+            }
+
+            if(currentProcess.resource != NULL)
+            {
+                currentProcess.resource -> resourceTimer--;
+
+                if(currentProcess.resource -> resourceTimer == 0)
+                {
+                    printf("%s freed %s\n", currentProcess.processName, currentProcess.resource -> resourceName);
+                    
+                    // If there is anything in the resource's ready list, dequeue it
+                    if(SizeOfQueue(currentProcess.resource -> PCBQueue) != 0)
+                    {
+                        printf("Dequeuing process from resource\n");
+                        PCB newProcess = Dequeue(&(currentProcess.resource -> PCBQueue));
+                        newProcess.state = READY;
+
+                        ReEnqueueProcess(newProcess, &hasProcess);
+                    }
+
+                    FreeRCB(&currentProcess, currentProcess.resource);
+                }
+            }
 
             //age processes to top every S ticks
             if(tick % (QUANTUM * 100) == 0)
@@ -138,6 +205,9 @@ PCB SimulateProcessCycle()
             //if process cant utilize the rest of the quantum, break
             if(j >= currentProcess.timeUsage)
             {
+                needsQing = 1;
+                if(currentProcess.arrivalTime != -1)
+                    printf("%s hit usage limit\n", currentProcess.processName);
                 break;
             }
 
@@ -149,6 +219,8 @@ PCB SimulateProcessCycle()
             //end quantum early if process is complete
             if(currentProcess.currentCPUTimeUsed == currentProcess.totalCPUTimeNeeded)
             {
+                if(currentProcess.arrivalTime != -1)
+                    printf("%s complete\n", currentProcess.processName);
                 break;
             }
         }
@@ -158,11 +230,35 @@ PCB SimulateProcessCycle()
         {
             //printf("%s completed at tick %i, ended with priority %i, and arrived at time %i\n", currentProcess.processName, tick, currentProcess.priority, currentProcess.arrivalTime);
             HandleProcessCompletion(&currentProcess);
+            printf("\nTEST1\n");
         }
 
-        //handle re-enqueuing
-        PromoteAndDemoteProcess(&currentProcess);
-        ReEnqueueProcess(currentProcess, &hasProcess);
+        //handle re-enqueuing if process doesn't need a resource, or it successfully got a resource
+        else if(currentProcess.desiredResource ==  -1 || currentProcess.resource != NULL)
+        {
+            PromoteAndDemoteProcess(&currentProcess);
+            ReEnqueueProcess(currentProcess, &hasProcess);
+            printf("\nTEST2\n");
+        }
+
+        // process wants resource, but couldn't get it
+        else if(currentProcess.desiredResource >= 0 && currentProcess.resource == NULL)
+        {
+            printf("\nTEST3\n");
+            if(needsQing)
+            {
+                //printf("Re-enqueueing\n");
+                ReEnqueueProcess(currentProcess, &hasProcess);
+            }
+
+            //printf("Process wanted a resource, but couldn't get it\n");
+
+
+            ChooseCurrentProcess(&currentProcess);
+
+            //set new time usage
+            currentProcess.timeUsage = rand() % QUANTUM;
+        }
     }
 
     return currentProcess;
@@ -188,9 +284,14 @@ void InsertProcessesFromCSVIntoTable(char* filePath, PTNodePtr* head)
         int arrivalTime = atoi(GetField(line, 1));
         int totalCPUTimeNeeded = atoi(GetField(line, 2));
         int processPriority = atoi(GetField(line, 3));
+        int desiredResource = atoi(GetField(line, 4));
+        int totalResourceTime = atoi(GetField(line, 5));
+        int resourceAcquireTime = atoi(GetField(line, 6));
 
         //create a PCB
-        PCB newPCB = CreatePCB(processName, arrivalTime, totalCPUTimeNeeded, PID, processPriority);
+        PCB newPCB = CreatePCB(processName, arrivalTime, totalCPUTimeNeeded, PID, processPriority, totalResourceTime, resourceAcquireTime, desiredResource);
+
+        //PrintPCB(newPCB);
 
         //create and insert new node
         PTNodePtr newPTNode = CreatePTNode(newPCB);
@@ -276,14 +377,24 @@ void ReEnqueueProcess(PCB currentProcess, int* hasProcess)
         {
             case 0:
                 Enqueue(&p0Queue, currentProcess);
+                printf("Re-enqueued %s to p0\n", currentProcess.processName);
                 break;
             case 1:
                 Enqueue(&p1Queue, currentProcess);
+                printf("Re-enqueued %s to p1\n", currentProcess.processName);
                 break;
             case 2:
                 Enqueue(&p2Queue, currentProcess);
+                printf("Re-enqueued %s to p2\n", currentProcess.processName);
                 break;
         }
+
+        /*PrintQueue(p0Queue);
+        getchar();
+        PrintQueue(p1Queue);
+        getchar();
+        PrintQueue(p2Queue);
+        getchar();*/
     }
 }
 
@@ -305,6 +416,8 @@ void HandleProcessCompletion(PCB* currentProcess)
 //move all processes to top queue to prevent starvation
 void AgeProcesses(PCB* currentProcess)
 {
+    printf("Aging processes\n");
+
     (*currentProcess).priority = 0;
 
     //move from p1queue into p0queue
@@ -317,6 +430,17 @@ void AgeProcesses(PCB* currentProcess)
     while(SizeOfQueue(p2Queue) != 0)
     {
         Enqueue(&p0Queue, Dequeue(&p2Queue));
+    }
+}
+
+void InitResources(RCB resources[], int numResources)
+{
+    char curName[32];
+
+    for(int i = 0; i < numResources; i++)
+    {
+        sprintf(curName, "resource%i", i);
+        resources[i] = CreateRCB(curName);
     }
 }
 
@@ -344,15 +468,21 @@ int ChooseCurrentProcess(PCB* currentProcess)
         return 1;
     }
 
-    *currentProcess = CreatePCB("", -1, -1, -1, -1);
+    *currentProcess = CreatePCB("", -1, -1, -1, -1, -1, -1, -1);
     return 0;
 }
 
+int ClaimResource(PCB* process, RCB* resource)
+{
+    if(resource -> state == ALLOCATED)
+    {
+        process -> resource = NULL;
+        return 0;
+    }
 
-
-
-
-
+    OwnRCB(process, resource);
+    return 1;
+}
 
 
 

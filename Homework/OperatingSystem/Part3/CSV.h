@@ -57,37 +57,37 @@ int ReadLine(FILE* file, char** line)
 
 char* GetField(char* line, int fieldIndex) 
 {
-    //duplicate line because strtok modifies in place
+    // Duplicate line because strtok modifies in place
     char* tmp = strdup(line);
+    if (tmp == NULL) {
+        return NULL; // strdup failed
+    }
 
-    //get first token
+    // Get the first token
     char* token = strtok(tmp, ",");
-    
-    //get following tokens
-    for(int i = 0; token != NULL; i++)
-    {
-        if(i == fieldIndex)
-        {
-            //free memory and return
-            if(tmp != token)
-            {
-                free(tmp);
-            }
 
-            return token;
+    // Iterate through tokens
+    for (int i = 0; token != NULL; i++) 
+    {
+        if (i == fieldIndex) 
+        {
+            // Allocate memory for the result and copy the token
+            char* result = strdup(token);
+            free(tmp); // Free the duplicated line
+            return result; // Return the copied field
         }
 
-        //get next token
+        // Get the next token
         token = strtok(NULL, ",");
     }
 
-    //free memory
+    // Free memory
     free(tmp);
-    free(token);
     
-    //return NULL if error encountered
+    // Return NULL if fieldIndex is out of bounds
     return NULL;
 }
+
 
 
 void CloseCSV(FILE* file)

@@ -20,6 +20,8 @@ int main(int argc, char* argv[]) {
     int *cpu_times = (int *)malloc(n * sizeof(int));
     int *priorities = (int*)malloc(n * sizeof(int));
     int *resources = (int*)malloc(n * sizeof(int));
+    int *totalResourceTimes = (int*)malloc(n * sizeof(int));
+    int *resourceAcquireTimes = (int*)malloc(n * sizeof(int));
 
     // Generate process details (you can customize this logic)
     for (int i = 0; i < n; i++) {
@@ -29,6 +31,13 @@ int main(int argc, char* argv[]) {
         cpu_times[i] = rand() % MAX_CPU_TIME;                     // Example: generate CPU times (e.g., 10, 20, 30...)
         priorities[i] = rand() % 3;                        // priority levels 0,1,2
         resources[i] = (rand() % 4) - 1;                // 3 resources plus resource -1 for no resouurce
+        totalResourceTimes[i] = rand() % (cpu_times[i] / 2) + 1;
+        resourceAcquireTimes[i] = rand() % (cpu_times[i] / 2) + 1;
+
+        if(resourceAcquireTimes[i] >= (cpu_times[i]) / 2)
+        {
+            resourceAcquireTimes[i] -= 1;
+        }
     }
 
     // Open the CSV file for writing
@@ -40,7 +49,7 @@ int main(int argc, char* argv[]) {
 
     // Write each process data to the CSV
     for (int i = 0; i < n; i++) {
-        fprintf(file, "%s,%d,%d,%d,%d\n", processes[i], arrival_times[i], cpu_times[i], priorities[i], resources[i]);
+        fprintf(file, "%s,%d,%d,%d,%d,%d,%d\n", processes[i], arrival_times[i], cpu_times[i], priorities[i], resources[i], totalResourceTimes[i], resourceAcquireTimes[i]);
     }
 
     // Close the file

@@ -1,0 +1,1 @@
+gcc OperatingSystemSimulator.c PCB.c PCBQueue.c ProcessTable.c RCB.c -o OperatingSystemSimulator || echo "Done."

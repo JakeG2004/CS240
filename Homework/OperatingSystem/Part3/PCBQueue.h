@@ -1,103 +1,29 @@
+/*
+PCBQueue.h
+Defines a queue structure for PCBs and functions for manipulating the queue
+*/
+
+#ifndef PCBQUEUE_H
+#define PCBQUEUE_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "PCB.h"
 
-struct QNode
+// Node structure for the queue
+typedef struct QNode
 {
     PCB PCB;
     struct QNode* next;
-};
+} QNode;
 
-typedef struct QNode QNode;
-typedef struct QNode* QNodePtr;
+typedef QNode* QNodePtr;
 
-int Enqueue(QNodePtr* head, PCB PCB)
-{
-    QNodePtr newNode = (QNodePtr)(malloc(sizeof(QNode)));
+// Function prototypes
+int Enqueue(QNodePtr* head, PCB PCB);
+PCB Dequeue(QNodePtr* head);
+int SizeOfQueue(QNodePtr head);
+void PrintQueue(QNodePtr head);
+void FreeQueue(QNodePtr* head);
 
-    //check errors
-    if(newNode == NULL)
-    {
-        printf("Failed to malloc in InsertQNode\n");
-        return 0;
-    }
-
-    //fill data
-    newNode -> PCB = PCB;
-    newNode -> next = NULL;
-
-    QNodePtr p = *head;
-
-    //handle empty list
-    if(p == NULL)
-    {
-        (*head) = newNode;
-        return 1;
-    }
-
-    //traverse to the end
-    while(p -> next != NULL)
-    {
-        p = p -> next;
-    }
-
-    //insert
-    p -> next = newNode;
-
-    return 1;
-}
-
-PCB Dequeue(QNodePtr* head)
-{
-    QNodePtr p = *head;
-
-    //grab return value
-    PCB retVal = p -> PCB;
-
-    //set head
-    (*head) = (*head) -> next;
-
-    //break link and free
-    p -> next = NULL;
-    free(p);
-
-    return retVal;
-}
-
-int SizeOfQueue(QNodePtr head)
-{
-    int size = 0;
-    QNodePtr p = head;
-
-    while(p != NULL)
-    {
-        size++;
-        p = p -> next;
-    }
-
-    return size;
-}
-
-void PrintQueue(QNodePtr head)
-{
-    QNodePtr p = head;
-
-    //print each node
-    while(p != NULL)
-    {
-        PrintPCB(p -> PCB);
-        p = p -> next;
-    }
-}
-
-void FreeQueue(QNodePtr* head)
-{
-    if(*head == NULL)
-    {
-        return;
-    }
-
-    FreeQueue(&(*head) -> next);
-
-    free(*head);
-}
+#endif // PCBQUEUE_H
