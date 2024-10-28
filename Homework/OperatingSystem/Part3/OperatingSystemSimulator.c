@@ -432,6 +432,7 @@ void HandleProcessWithResource(PCB* currentProcess)
             if(SizeOfQueue(currentProcess -> resource -> PCBQueue) > 0)
             {
                 PCB freedProcess = Dequeue(&(currentProcess -> resource -> PCBQueue));
+                freedProcess.state = READY;
                 ReEnqueueProcess(freedProcess);
             }
             
