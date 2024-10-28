@@ -13,22 +13,26 @@
 //=============PROTOTYPES===================
 PCB SimulateProcessCycle();
 
+//=============FUNCTIONS DEALING WITH THE PROCESS TABLE====================
 void InsertProcessesFromCSVIntoTable(char* filePath, PTNodePtr* head);
 void GetProcessesAtArrivalTime(int arrivalTime);
 
+//==============FUNCTIONS DEALING WITH QUEUES============
 void PromoteAndDemoteProcess(PCB* currentProcess);
 void ReEnqueueProcess(PCB currentProcess);
 void HandleProcessCompletion(PCB* currentProcess);
 void AgeProcesses(PCB* currentProcess);
 
-void InitResources(RCB resources[], int numResources);
-int ClaimResource(PCB* process, RCB* resource);
-
-int ChooseCurrentProcess(PCB* currentProcess);
+//===========FUNCTIONS DEALING WITH PROCESSES==========
 void GetRandomTimeUsage(PCB* process);
+int ChooseCurrentProcess(PCB* currentProcess);
 
-int GetResourceIfAvailable(PCB* currentProcess, int* timeUsed);
+//============FUNCTIONS DEALING WITH RESOURCES============
 void HandleProcessWithResource(PCB* currentProcess);
+void InitResources(RCB resources[], int numResources);
+
+int ClaimResource(PCB* process, RCB* resource);
+int GetResourceIfAvailable(PCB* currentProcess, int* timeUsed);
 
 
 //=============GLOBAL VARIABLES=============
@@ -181,6 +185,8 @@ PCB SimulateProcessCycle()
     return currentProcess;
 }
 
+//=============FUNCTIONS DEALING WITH PROCESS TABLE============
+
 //handle taking data from CSV file and inserting it into the process table
 void InsertProcessesFromCSVIntoTable(char* filePath, PTNodePtr* head)
 {
@@ -252,6 +258,9 @@ void GetProcessesAtArrivalTime(int arrivalTime)
         newPCB = FetchProcessWithArrivalTime(&processTable, arrivalTime);
     }
 }
+
+
+//===============FUNCTIONS DEALING WITH QUEUES====================
 
 //promote and demote processes according to promotion and demotion rules
 void PromoteAndDemoteProcess(PCB* currentProcess)
@@ -333,16 +342,8 @@ void AgeProcesses(PCB* currentProcess)
     }
 }
 
-void InitResources(RCB resources[], int numResources)
-{
-    char curName[32];
 
-    for(int i = 0; i < numResources; i++)
-    {
-        sprintf(curName, "resource%i", i);
-        resources[i] = CreateRCB(curName);
-    }
-}
+//============FUNCTIONS DEALING WITH PROCESSES===================
 
 //will return 0 if couldnt find a process, 1 otherwise
 int ChooseCurrentProcess(PCB* currentProcess)
@@ -372,23 +373,14 @@ int ChooseCurrentProcess(PCB* currentProcess)
     return 0;
 }
 
-int ClaimResource(PCB* process, RCB* resource)
-{
-    if(resource -> state == ALLOCATED)
-    {
-        process -> resource = NULL;
-        return 0;
-    }
-
-    OwnRCB(process, resource);
-    return 1;
-}
-
 void GetRandomTimeUsage(PCB* process)
 {
     if(process != NULL)
         process -> timeUsage = rand() % QUANTUM + 1;
 }
+
+
+//==========FUNCTIONS DEALING WITH RESOURCES=================
 
 // 1 for got resource, -1 for blocked on resource, 0 for not checked
 int GetResourceIfAvailable(PCB* currentProcess, int* timeUsed)
@@ -417,6 +409,18 @@ int GetResourceIfAvailable(PCB* currentProcess, int* timeUsed)
     return 0;
 }
 
+int ClaimResource(PCB* process, RCB* resource)
+{
+    if(resource -> state == ALLOCATED)
+    {
+        process -> resource = NULL;
+        return 0;
+    }
+
+    OwnRCB(process, resource);
+    return 1;
+}
+
 void HandleProcessWithResource(PCB* currentProcess)
 {
     if(currentProcess -> resource != NULL)
@@ -433,5 +437,16 @@ void HandleProcessWithResource(PCB* currentProcess)
             
             FreeRCB(currentProcess, currentProcess -> resource);
         }
+    }
+}
+
+void InitResources(RCB resources[], int numResources)
+{
+    char curName[32];
+
+    for(int i = 0; i < numResources; i++)
+    {
+        sprintf(curName, "resource%i", i);
+        resources[i] = CreateRCB(curName);
     }
 }
