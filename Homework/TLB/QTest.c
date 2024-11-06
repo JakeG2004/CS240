@@ -9,16 +9,13 @@ int main()
     PrintQueue(head);
 
     for(int i = 0; i < 10; i++)
-        Enqueue(&head, i);
+        Enqueue(&head, i % 3);
 
     PrintQueue(head);
-    printf("Q Size: %i\n", SizeOfQueue(head));
 
-    int lastVal = 100;
+    RemoveAllInstancesOfN(&head, 0);
 
-    GetLastItem(&head, &lastVal);
-
-    printf("Last item is %i\n", lastVal);
+    printf("fdsa\n");
 
     PrintQueue(head);
 }

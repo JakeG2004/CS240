@@ -48,7 +48,7 @@ int GetLastItem(NodePtr* head, int* lastNode)
     if(*head == NULL)
     {
         printf("Attempting to get item from empty queue\n");
-        *lastNode = 0;
+        *lastNode = -1;
         return 0;
     }
 
@@ -120,5 +120,61 @@ int SizeOfQueue(NodePtr head)
 
     return retVal;
 }
+
+int RemoveAllInstancesOfN(NodePtr* head, int n)
+{
+    // Check if the list is empty
+    if(*head == NULL)
+    {
+        return 1;
+    }
+
+    // Handle the head node if it contains the value n
+    NodePtr temp;
+
+    while (*head != NULL && (*head) -> data == n)
+    {
+        temp = *head;
+        *head = (*head) -> next;
+        free(temp);
+    }
+
+    // Create traversal nodes
+    NodePtr p = *head;
+    NodePtr q = (*head) ? (*head) -> next : NULL;
+
+    // Traverse the list
+    while (q != NULL)
+    {
+        // If a match is found, erase it and adjust pointers
+        if (q->data == n)
+        {
+            // Re-link list
+            p -> next = q -> next;
+
+            // Break link and free
+            q -> next = NULL;
+            free(q);
+
+            // Finish linking
+            q = p -> next;
+        }
+        else
+        {
+            // Increment pointers
+            p = q;
+            q = p -> next;
+        }
+    }
+
+    return 1;
+}
+
+int UpdateUsageQueue(NodePtr* usageQueue, int usedNum)
+{
+    RemoveAllInstancesOfN(usageQueue, usedNum);
+    Enqueue(usageQueue, usedNum);
+}
+
 
 #endif
