@@ -7,10 +7,11 @@
 int InsertIntoDir(FSNodePtr* curDir, FSNodePtr newNode);
 int MakeNode(char* name, FSNodePtr* parent, int type);
 int SearchDir(char* query, FSNodePtr srcDir);
-int ListDir(FSNodePtr curDir);
+int RemoveFromDirByName(char* query, FSNodePtr* src);
 int IsEmptyDir(FSNodePtr dir);
+void ListDir(FSNodePtr curDir);
 
-int InsertIntoDir(FSNodePtr* curDir, FSNodePtr newNode) // 1 on success, 0 on failure
+int InsertIntoDir(FSNodePtr* curDir, FSNodePtr newNode) // Inserts a node into a directory. 1 on success, 0 on failure
 {
     if(curDir == NULL || *curDir == NULL || newNode == NULL)
     {
@@ -44,7 +45,7 @@ int InsertIntoDir(FSNodePtr* curDir, FSNodePtr newNode) // 1 on success, 0 on fa
     return 1;
 }
 
-int MakeNode(char* name, FSNodePtr* parent, int type) // 1 on success, 0 on failure
+int MakeNode(char* name, FSNodePtr* parent, int type) // Makes node and inserts into a directory. 1 on success, 0 on failure
 {
     // Handle invalid directory
     if(parent == NULL || *parent == NULL)
@@ -64,7 +65,7 @@ int MakeNode(char* name, FSNodePtr* parent, int type) // 1 on success, 0 on fail
     return InsertIntoDir(parent, newNode);
 }
 
-int SearchDir(char* query, FSNodePtr srcDir)
+int SearchDir(char* query, FSNodePtr srcDir) // Searches a directory by name. 1 on match, 0 on no match
 {
     FSNodePtr p = srcDir -> child;
 
@@ -82,7 +83,7 @@ int SearchDir(char* query, FSNodePtr srcDir)
     return 0;
 }
 
-int RemoveFromDirByName(char* query, FSNodePtr* src)
+int RemoveFromDirByName(char* query, FSNodePtr* src) // Removes from a directory by name. Only removes files and empty directories. 1 on success, 0 on failure
 {
     if(src == NULL || *src == NULL || query == NULL)
     {
@@ -140,14 +141,20 @@ int RemoveFromDirByName(char* query, FSNodePtr* src)
     return 0;
 }
 
-int IsEmptyDir(FSNodePtr dir)
+int IsEmptyDir(FSNodePtr dir) // Checks if a directory is empty. 1 if directory is empty, 0 otherwise
 {
     return (dir -> child == NULL);
 }
 
-int ListDir(FSNodePtr curDir)
+void ListDir(FSNodePtr curDir) // Lists all nodes in a directory. No return type
 {
     FSNodePtr p = curDir -> child;
+
+    if(p == NULL)
+    {
+        printf("Directory %s is empty\n", curDir -> name);
+        return;
+    }
 
     while(p != NULL)
     {

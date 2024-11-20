@@ -7,10 +7,13 @@ int main()
 {
     FSNodePtr root = CreateNode("/", DIRECTORY, NULL);
     MakeNode("dir1", &root, DIRECTORY);
-    MakeNode("dir2", &root, DIRECTORY);
+    MakeNode("dir1", &root, DIRECTORY);
     MakeNode("file1", &root, FSFILE);
+    MakeNode("file2", &(root -> child), FSFILE);
 
-    printf("%i\n", RemoveFromDirByName("file1", &root));
+    ListDir(root);
+
+    printf("%i\n", RemoveFromDirByName("dir1", &root));
 
     ListDir(root);
 }
