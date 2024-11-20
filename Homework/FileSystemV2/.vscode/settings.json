@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "fsoperations.h": "c",
+        "fsnode.h": "c"
+    }
+}
