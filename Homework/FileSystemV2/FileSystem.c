@@ -72,25 +72,34 @@ int ProcessCommand(int command, char* op1, char* op2, FSNodePtr* curDir, FSNodeP
             if(NavigateToDirectory(op1, &travNode) == 0)
             {
                 printf("Failed to navigate to directory\n");
-                break;
             }
 
             if(MakeNode(fileName, &travNode, DIRECTORY) == 0)
             {
                 printf("Failed to make directory\n");
-                break;
             }
             break;
 
         case ADD:
-            NavigateToDirectory(op1, &travNode);
-            MakeNode(fileName, &travNode, FSFILE);
+            if(NavigateToDirectory(op1, &travNode) == 0)
+            {
+                printf("Failed to navigate to directory!\n");
+            }
+
+            if(MakeNode(fileName, &travNode, FSFILE) == 0)
+            {
+                printf("Failed to make file!\n");
+            }
             break;
 
         case SEARCH:
             if(SearchDir(op1, *curDir) == 1)
             {
                 printf("Found file %s in %s\n", op1, (*curDir) -> name);
+            }
+            else
+            {
+                printf("Unable to find file %s in %s\n", op1, (*curDir) -> name);
             }
             break;
 
@@ -99,20 +108,35 @@ int ProcessCommand(int command, char* op1, char* op2, FSNodePtr* curDir, FSNodeP
             break;
 
         case RM:
-            RemoveFromDirByName(op1, curDir, 1);
+            if(RemoveFromDirByName(op1, curDir, 1) == 0)
+            {
+                printf("Unable to remove %s from %s\n", op1, (*curDir) -> name);
+            }
             break;
 
         case MV:
-            NavigateToDirectory(op2, &travNode);
-            MoveFile(curDir, &travNode, op1);
+            if(NavigateToDirectory(op2, &travNode) == 0)
+            {
+                printf("Unable to navigate to directory!\n");
+            }
+            if(MoveFile(curDir, &travNode, op1) == 0)
+            {
+                printf("Unable to move file %s from %s to %s\n", op1, (*curDir) -> name, travNode -> name);
+            }
             break;
 
         case TREE:
-            DisplayTree(*root, 0);
+            if(DisplayTree(*root, 0) == 0)
+            {
+                printf("Unable to display tree!\n");
+            }
             break;
 
         case READ:
-            ReadFromFile(op1, curDir, root);
+            if(ReadFromFile(op1, curDir, root) == 0)
+            {
+                printf("Unable to read file %s\n", op1);
+            }
             break;
 
         case QUIT:
