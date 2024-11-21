@@ -5,15 +5,23 @@
 
 int main()
 {
-    FSNodePtr root = CreateNode("/", DIRECTORY, NULL);
+    FSNodePtr root = CreateNode("root", DIRECTORY, NULL);
     MakeNode("dir1", &root, DIRECTORY);
-    MakeNode("dir1", &root, DIRECTORY);
+    MakeNode("dir2", &root, DIRECTORY);
     MakeNode("file1", &root, FSFILE);
-    MakeNode("file2", &(root -> child), FSFILE);
+    
+    //printf("\n==ROOT==\n");
+    //ListDir(root);
 
-    ListDir(root);
+    MoveFile(&root, &(root -> child), "file1");
+    MakeNode("file2", &root -> child -> child, FSFILE);
+    //printf("%i\n", MoveFile(&root, &(root -> child), "file1"));
 
-    printf("%i\n", RemoveFromDirByName("dir1", &root));
+   // printf("\n==dir1==\n");
+    //ListDir(root -> child);
 
-    ListDir(root);
+    //PrintNode(root -> child -> child);
+    
+
+    DisplayTree(root, 0);
 }
