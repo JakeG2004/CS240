@@ -1,0 +1,144 @@
+jake@pop-os: ~/Documents/Schoolwork/CS240/Homework/FileSystemV2$ ./a.out 
+root > read gen_commands.txt
+Reading gen_commands.txt
+Done readiding gen_commands.txt
+root > tree
+/root
+  /home
+    /user1.txt
+    /jane
+      /notes.txt
+      /documents
+        /report.docx
+    /john
+      /todo.txt
+      /pictures
+        /vacation.jpg
+    /alice
+      /research.pdf
+      /code
+        /project1.py
+    /bob
+      /music.mp3
+      /videos
+        /movie.mkv
+    /user2
+      /profile.txt
+      /downloads
+        /software.zip
+    /user3
+      /config.xml
+      /projects
+        /notes.txt
+    /user4
+      /letter.odt
+      /music
+        /song.ogg
+    /user5
+      /family.png
+      /videos
+        /presentation.ogv
+  /bin
+    /ls
+    /bash
+  /etc
+    /hosts
+    /passwd
+    /systemd
+      /system.conf
+    /network
+      /interfaces
+    /ssh
+      /sshd_config
+    /X11
+      /xorg.conf
+    /init.d
+      /apache2
+    /default
+      /keyboard
+    /opt
+      /settings.xml
+  /usr
+    /local
+      /bin
+      /lib
+        /libpython3.so
+    /bin
+      /gcc
+      /java
+    /include
+      /stdio.h
+      /stdlib.h
+    /share
+      /README
+    /lib
+      /libc.so
+    /src
+      /Makefile
+    /games
+      /snake
+  /var
+    /log
+      /messages
+      /auth.log
+    /www
+      /index.html
+    /lib
+      /status
+    /mail
+      /user1
+    /cache
+      /package.deb
+    /spool
+      /root
+    /backups
+      /system.tar.gz
+  /tmp
+    /tempfile1.tmp
+    /tempfile2.tmp
+    /mytemp
+      /data.txt
+    /tempfile3.tmp
+    /tempfile4.tmp
+    /tempfile5.tmp
+    /tempfile6.tmp
+    /tempfile7.tmp
+    /tempfile8.tmp
+  /root
+    /.bashrc
+    /bin
+      /myscript.sh
+  /srv
+    /data.txt
+  /mnt
+  /media
+  /lost+found
+    /recovered_file.txt
+  /proc
+  /sys
+  /dev
+    /null
+  /opt
+    /config.ini
+root > mkdir /home
+Node already exists!
+root > add /bin/ls
+Node already exists!
+root > rm /home
+Directory is not empty!
+root > rmdir /bin
+Unknown command
+root > mkdir /invalid/path
+Invalid path!
+root > add /home/jame/documents/report.docx
+Node already exists!
+root > rm /home/john/documents/report.docx
+Node doesn't exist!
+root > mv /home/alice /home/jane
+Node already exists!
+root > cp /home/bob /home/user2
+Unknown command
+root > ls /fake/directory
+Node doesn't exist!
+root > quit
+Quitting...

@@ -1,5 +1,0 @@
-mkdir a
-add c
-mkdir a/b
-mv c a/b
-tree

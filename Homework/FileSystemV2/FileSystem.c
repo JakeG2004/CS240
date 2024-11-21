@@ -33,6 +33,8 @@ int CommandToEnum(char* command);
 int ProcessCommand(int command, char* op1, char* op2, FSNodePtr* curDir, FSNodePtr* root);
 int NavigateToDirectory(char* dir, FSNodePtr* curDir);
 int ReadFromFile(char* fileName, FSNodePtr* curDir, FSNodePtr* root);
+void GetLastTerm(char* path, char* lastTerm);
+void TrimWhitespace(char* str);
 
 int main()
 {
@@ -63,15 +65,26 @@ int main()
 int ProcessCommand(int command, char* op1, char* op2, FSNodePtr* curDir, FSNodePtr* root) 
 {
     FSNodePtr travNode = *curDir;
+    char* fileName = (char*)malloc(sizeof(char) * OP_SIZE);
+    GetLastTerm(op1, fileName);
     switch (command) {
         case MKDIR:
-            NavigateToDirectory(op1, &travNode);
-            MakeNode(op1, &travNode, DIRECTORY);
+            if(NavigateToDirectory(op1, &travNode) == 0)
+            {
+                printf("Failed to navigate to directory\n");
+                break;
+            }
+
+            if(MakeNode(fileName, &travNode, DIRECTORY) == 0)
+            {
+                printf("Failed to make directory\n");
+                break;
+            }
             break;
 
         case ADD:
             NavigateToDirectory(op1, &travNode);
-            MakeNode(op1, &travNode, FSFILE);
+            MakeNode(fileName, &travNode, FSFILE);
             break;
 
         case SEARCH:
@@ -219,61 +232,6 @@ int CommandToEnum(char* command)
     return ERROR;
 }
 
-/*int GetUserExpression(char* command, char* op1, char* op2)
-{
-    char expression[EXP_SIZE_MAX];
-    if(!fgets(expression, EXP_SIZE_MAX, stdin))
-    {
-        return 0;
-    }
-
-    int curIndex = 0;
-
-    // Get command
-    for(int i = 0; i < COMM_SIZE; i++)
-    {
-        if(expression[i] == ' ' || expression[i] == '\n' || expression[i] == '\0')
-        {
-            curIndex = i;
-            break;
-        }
-
-        command[i] = expression[i];
-    }
-
-    // Increment past the space
-    curIndex++;
-
-    // Get first operand
-    for(int i = curIndex; (i - curIndex) < OP_SIZE; i++)
-    {
-        if(expression[i] == ' ' || expression[i] == '\n' || expression[i] == '\0')
-        {
-            curIndex = i;
-            break;
-        }
-
-        op1[i - curIndex] = expression[i];
-    }
-
-    // Increment past the space
-    curIndex++;
-
-    // Get second operand
-    for(int i = curIndex; (i - curIndex) < OP_SIZE; i++)
-    {
-        if(expression[i] == ' ' || expression[i] == '\n' || expression[i] == '\0')
-        {
-            curIndex = i;
-            break;
-        }
-
-        op2[i - curIndex] = expression[i];
-    }
-
-    return 1;
-}*/
-
 int GetUserInput(char* expression)
 {
     if (!fgets(expression, EXP_SIZE_MAX, stdin))
@@ -378,10 +336,15 @@ int ReadFromFile(char* fileName, FSNodePtr* curDir, FSNodePtr* root)
             expression[len - 1] = '\0';
         }
 
-        printf("%s\n", expression);
+        //printf("%s\n", expression);
 
         // Parse and process expression
         ParseExpression(expression, command, op1, op2);
+        //printf("Command: %s\n", command);
+        //printf("Op1: %s\n", op1);
+        //printf("Op2: %s\n", op2);
+
+        //getchar();
         if(ProcessCommand(CommandToEnum(command), op1, op2, curDir, root) == 0)
         {
             printf("Quitting...\n");
@@ -402,4 +365,22 @@ int ReadFromFile(char* fileName, FSNodePtr* curDir, FSNodePtr* root)
     fclose(comList);
 
     printf("Done readiding %s\n", fileName);
+}
+
+void GetLastTerm(char* path, char* lastTerm) 
+{
+    // Find the last occurrence of '/' or '\\' (for Unix or Windows paths)
+    char* lastSlash = strrchr(path, '/');  // For Unix-like systems (e.g., Linux, macOS)
+    if (!lastSlash) {
+        lastSlash = strrchr(path, '\\');  // For Windows paths
+    }
+
+    // If a slash was found, the last term starts right after it
+    if (lastSlash) {
+        strcpy(lastTerm, lastSlash + 1);
+    }
+    else {
+        // No slash found, the whole string is the last term
+        strcpy(lastTerm, path);
+    }
 }

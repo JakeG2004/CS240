@@ -239,7 +239,6 @@ int GetFileFromDir(FSNodePtr src, char* fileName, FSNodePtr* result)
     return 0;  // Return 0 if the file is not found
 }
 
-
 int DisplayTree(FSNodePtr root, int depth) // Displays the tree. Returns 0 on fail, 1 on success
 {
     // Handle null root case
