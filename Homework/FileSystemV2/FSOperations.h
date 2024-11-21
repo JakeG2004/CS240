@@ -7,7 +7,7 @@
 int InsertIntoDir(FSNodePtr* curDir, FSNodePtr newNode);
 int MakeNode(char* name, FSNodePtr* parent, int type);
 int SearchDir(char* query, FSNodePtr srcDir);
-int RemoveFromDirByName(char* query, FSNodePtr* src);
+int RemoveFromDirByName(char* query, FSNodePtr* src, int doDelete);
 int IsEmptyDir(FSNodePtr dir);
 int MoveFile(FSNodePtr* src, FSNodePtr* dst, char* fileName);
 int GetFileFromDir(FSNodePtr src, char* fileName, FSNodePtr* result);
@@ -86,7 +86,7 @@ int SearchDir(char* query, FSNodePtr srcDir) // Searches a directory by name. 1 
     return 0;
 }
 
-int RemoveFromDirByName(char* query, FSNodePtr* src) // Removes from a directory by name. Only removes files and empty directories. 1 on success, 0 on failure
+int RemoveFromDirByName(char* query, FSNodePtr* src, int doDelete) // Removes from a directory by name. Only removes files and empty directories. 1 on success, 0 on failure
 {
     if(src == NULL || *src == NULL || query == NULL)
     {
@@ -124,7 +124,10 @@ int RemoveFromDirByName(char* query, FSNodePtr* src) // Removes from a directory
 
             // Readjust link and free
             (*src) -> child = cur -> nextSibling;
-            FreeNode(cur);
+            if(doDelete)
+            {
+                FreeNode(cur);
+            }
             return 1;
         }
 
@@ -132,7 +135,10 @@ int RemoveFromDirByName(char* query, FSNodePtr* src) // Removes from a directory
         {
             //printf("not first\n");
             prev -> nextSibling = cur -> nextSibling;
-            FreeNode(cur);
+            if(doDelete)
+            {
+                FreeNode(cur);
+            }
             return 1;            
         }
 
@@ -178,9 +184,8 @@ int MoveFile(FSNodePtr* src, FSNodePtr* dst, char* fileName) // Moves a file fro
     }
 
     // Remove it from the directory
-    if(RemoveFromDirByName(fileName, src) == 0)
+    if(RemoveFromDirByName(fileName, src, 0) == 0)
     {
-        free(fileToMove);
         return 0;
     }
 
